@@ -1,103 +1,332 @@
-import Image from "next/image";
+"use client";
+import { useState } from "react";
+import Header from "./components/Header";
+import Footer from "./components/Footer";
+import ProgressBar from "./components/ProgressBar";
+import SourceButtons from "./components/SourceButtons";
+import RagStore from "./components/RagStore";
+import ChatWindow from "./components/ChatWindow";
+import Modal from "./components/Modal";
+import { Upload, Loader } from "lucide-react";
+
+// import * as pdfjsLib from "pdfjs-dist";
+// import pdfWorker from "pdfjs-dist/build/pdf.worker?url";
+
+import toast, { Toaster } from "react-hot-toast";
+// console.log('pdfjsLib.version', pdfWorker);
+
+// pdfjsLib.GlobalWorkerOptions.workerSrc = '/';
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [showFileModal, setShowFileModal] = useState(false);
+  const [showWebsiteModal, setShowWebsiteModal] = useState(false);
+  const [showTextModal, setShowTextModal] = useState(false);
+  const [refreshStore, setRefreshStore] = useState(false);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
+  const [files, setFiles] = useState<File[]>([]);
+  const [websiteLinks, setWebsiteLinks] = useState("");
+  const [rawText, setRawText] = useState("");
+  const [sourceCount, setSourceCount] = useState(0);
+
+  const [chatInput, setChatInput] = useState("");
+  const [chatHistory, setChatHistory] = useState<any[]>([]);
+  const [selectedCollections, setSelectedCollections] = useState<string[]>([]);
+
+  // loaders for different processes
+  const [loadingChat, setLoadingChat] = useState(false);
+  const [loadingFile, setLoadingFile] = useState(false);
+  const [loadingText, setLoadingText] = useState(false);
+  const [loadingWebsite, setLoadingWebsite] = useState(false);
+
+  const sourceCountLimit = 10;
+
+  // Chat message sending
+  const handleSendMessage = async () => {
+    if (!chatInput.trim()) return toast.error("Please enter a message!");
+    if (selectedCollections.length === 0)
+      return toast.error("Please select at least one collection!");
+
+    setChatHistory((prev) => [...prev, { sender: "user", text: chatInput }]);
+    setChatInput("");
+    setLoadingChat(true);
+
+    try {
+      const response = await fetch("/api/send-message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          collections: selectedCollections,
+          message: chatInput,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+
+      setChatHistory((prev) => [...prev, { sender: "bot", text: data.text }]);
+    } catch (err) {
+      toast.error("Error fetching AI response!");
+      console.error(err);
+    } finally {
+      setLoadingChat(false);
+    }
+  };
+
+  // Add source handler
+  const handleAddSource = async (type: "file" | "website" | "text") => {
+    if (type === "file") {
+      if (files.length === 0) return toast.error("Please select a file!");
+      setLoadingFile(true);
+
+      try {
+        for (const file of files) {
+          const fileExt = file.name.split(".").pop()?.toLowerCase();
+          if (fileExt !== "pdf" && fileExt !== "csv") {
+            toast.error(`Unsupported file type: ${file.name}`);
+            continue;
+          }
+
+          console.log("Processing file:", file.name, "type:", fileExt);
+          const formData = new FormData();
+
+          formData.append("file", file, file.name);
+          formData.append("type", "file");
+          formData.append("fileType", fileExt);
+
+          const response = await fetch("/api/manage-sources", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(
+              error.error || `Error processing file: ${file.name}`
+            );
+          }
+        }
+        toast.success("Files processed successfully!");
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "Error processing files!"
+        );
+        console.error(err);
+      } finally {
+        setLoadingFile(false);
+      }
+    }
+
+    if (type === "text") {
+      if (!rawText.trim()) return toast.error("Please enter some text!");
+      setLoadingText(true);
+
+      try {
+        const formData = new FormData();
+        formData.append("type", "text");
+        formData.append("rawText", rawText);
+
+        const response = await fetch("/api/manage-sources", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Error processing text");
+        }
+
+        toast.success("Text processed successfully!");
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "Error processing text!"
+        );
+        console.error(err);
+      } finally {
+        setLoadingText(false);
+      }
+    }
+
+    if (type === "website") {
+      if (!websiteLinks.trim())
+        return toast.error("Please enter website links!");
+      setLoadingWebsite(true);
+
+      try {
+        const links = websiteLinks
+          .split("\n")
+          .map((link) => link.trim())
+          .filter((link) => link);
+
+        if (links.length > 10) {
+          return toast.error("Please enter up to 10 website links!");
+        }
+
+        const formData = new FormData();
+        formData.append("type", "website");
+        formData.append("links", links.join("\n"));
+
+        const response = await fetch("/api/manage-sources", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Error processing website links");
+        }
+
+        toast.success("Website(s) processed successfully!");
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "Error processing website links!"
+        );
+        console.error(err);
+      } finally {
+        setLoadingWebsite(false);
+      }
+    }
+
+    setRefreshStore((prev) => !prev);
+    setSourceCount((count) => Math.min(10, count + 1));
+    setFiles([]);
+    setWebsiteLinks("");
+    setRawText("");
+    setShowFileModal(false);
+    setShowWebsiteModal(false);
+    setShowTextModal(false);
+  };
+
+  const userLogin = () => {
+    toast.error("You have reached the maximum number of sources!");
+    //TODO: Setup login modal
+  };
+  return (
+    <div className="min-h-screen flex flex-col text-white bg-gradient-to-br from-[#1a001a] to-[#06191c]">
+      <Toaster position="top-right" reverseOrder={false} />
+      <Header />
+
+      <div className="p-4 space-y-4">
+        <SourceButtons
+          onFile={() =>
+            sourceCount < sourceCountLimit
+              ? setShowFileModal(true)
+              : userLogin()
+          }
+          onWebsite={() =>
+            sourceCount < sourceCountLimit
+              ? setShowWebsiteModal(true)
+              : userLogin()
+          }
+          onText={() =>
+            sourceCount < sourceCountLimit
+              ? setShowTextModal(true)
+              : userLogin()
+          }
+          sourceCountLimit={sourceCountLimit}
+          sourceCount={sourceCount}
+        />
+        <ProgressBar sourceCount={sourceCount} />
+      </div>
+
+      <main className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
+        <RagStore
+          refresh={refreshStore}
+          onSelectChange={(collections) => setSelectedCollections(collections)}
+          setSourceCount={setSourceCount}
+        />
+        <ChatWindow
+          chatHistory={chatHistory}
+          chatInput={chatInput}
+          setChatInput={setChatInput}
+          handleSendMessage={handleSendMessage}
+          loading={loadingChat}
+        />
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+
+      <Footer />
+
+      {/* File Modal */}
+      {showFileModal && (
+        <Modal title="Upload File" onClose={() => setShowFileModal(false)}>
+          <div className="bg-black/40 rounded-xl p-6 border border-dashed border-white/20 hover:bg-black/50 transition relative flex flex-col items-center justify-center mb-6">
+            <input
+              type="file"
+              multiple
+              accept=".pdf,.csv"
+              onChange={(e) =>
+                setFiles(e.target.files ? Array.from(e.target.files) : [])
+              }
+              className="absolute inset-0 opacity-0 cursor-pointer"
+            />
+            <Upload className="w-10 h-10 text-indigo-400 mb-2" />
+            <p className="text-gray-300">Click or drag files to upload</p>
+            {files.length > 0 && (
+              <div className="text-sm text-gray-300 mt-3">
+                {files.length} file(s) selected
+              </div>
+            )}
+          </div>
+          <button
+            onClick={() => handleAddSource("file")}
+            className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-semibold text-lg flex items-center justify-center gap-2"
+            disabled={loadingFile}
+          >
+            {loadingFile && <Loader className="w-5 h-5 animate-spin" />}
+            Add Source
+          </button>
+        </Modal>
+      )}
+
+      {/* Website Modal */}
+      {showWebsiteModal && (
+        <Modal
+          title="Add Website Links"
+          onClose={() => setShowWebsiteModal(false)}
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+          <textarea
+            placeholder="Paste website links here..."
+            value={websiteLinks}
+            onChange={(e) => setWebsiteLinks(e.target.value)}
+            className="w-full p-3 rounded bg-black/60 border border-white/10 focus:outline-none focus:ring-2 focus:ring-indigo-500 h-48 mb-6"
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
+          <button
+            onClick={() => handleAddSource("website")}
+            className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-semibold text-lg flex items-center justify-center gap-2"
+            disabled={loadingWebsite}
+          >
+            {loadingWebsite && <Loader className="w-5 h-5 animate-spin" />}
+            Add Source
+          </button>
+          <p className="mt-2 text-sm text-yellow-300 mb-3 flex items-start gap-2">
+            <span className="mt-0.5">ℹ️</span>
+            <span>
+              You can add <strong>up to 10 website links</strong> at a time.
+              <br />
+              Make sure each link is on a separate line.
+            </span>
+          </p>
+        </Modal>
+      )}
+
+      {/* Text Modal */}
+      {showTextModal && (
+        <Modal title="Paste Text" onClose={() => setShowTextModal(false)}>
+          <textarea
+            placeholder="Paste any raw text content here..."
+            value={rawText}
+            onChange={(e) => setRawText(e.target.value)}
+            className="w-full p-3 rounded bg-black/60 border border-white/10 focus:outline-none focus:ring-2 focus:ring-indigo-500 h-48 mb-6"
           />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          <button
+            onClick={() => handleAddSource("text")}
+            className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-semibold text-lg flex items-center justify-center gap-2"
+            disabled={loadingText}
+          >
+            {loadingText && <Loader className="w-5 h-5 animate-spin" />}
+            Add Source
+          </button>
+        </Modal>
+      )}
     </div>
   );
 }
