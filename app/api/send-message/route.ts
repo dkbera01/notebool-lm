@@ -59,8 +59,6 @@ export async function POST(request: Request) {
     const client = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
-    console.log("SYSTEM_PROMPT:", SYSTEM_PROMPT);
-    
 
     const response = await client.chat.completions.create({
       model: "gpt-4o-mini",

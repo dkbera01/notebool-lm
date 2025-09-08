@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trash2 } from "lucide-react";
@@ -168,7 +170,7 @@ export default function RagStore({
         <h2 className="text-xl font-semibold text-white">Sources</h2>
         <button
           onClick={toggleSelectAll}
-          className="py-1 px-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-semibold text-white text-sm"
+          className="py-1 px-3 bg-cyan-600 hover:bg-cyan-500 rounded-xl font-semibold text-white text-sm"
         >
           {selectedCollections.length === collections.length
             ? "Deselect All"
@@ -191,7 +193,7 @@ export default function RagStore({
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
                 layout
-                className="text-gray-300 transition hover:bg-black/30 rounded-xl p-3 cursor-pointer border border-transparent hover:border-indigo-500"
+                className="text-gray-300 transition hover:bg-black/30 rounded-xl p-3 cursor-pointer border border-transparent hover:border-cyan-500"
               >
                 <div className="flex justify-between items-center">
                   {/* Custom checkbox */}
@@ -203,13 +205,13 @@ export default function RagStore({
                       type="checkbox"
                       checked={selectedCollections.includes(collection.name)}
                       onChange={() => toggleSelect(collection.name)}
-                      className="w-4 h-4 accent-indigo-500 cursor-pointer rounded"
+                      className="w-4 h-4 accent-cyan-500 cursor-pointer rounded"
                     />
                   </div>
 
                   {/* Collection name */}
                   <span
-                    className="flex-1 cursor-pointer hover:text-indigo-400"
+                    className="flex-1 cursor-pointer hover:text-cyan-400"
                     onClick={() => handleToggle(collection.name)}
                   >
                     {collection.name}
@@ -246,7 +248,7 @@ export default function RagStore({
                         <>
                           {sources.length > 0 && (
                             <>
-                              <h3 className="text-lg font-semibold text-indigo-400">
+                              <h3 className="text-lg font-semibold text-cyan-400">
                                 Sources
                               </h3>
                               <ul className="list-disc list-inside text-gray-300 mb-4">
@@ -256,7 +258,7 @@ export default function RagStore({
                               </ul>
                             </>
                           )}
-                          <h3 className="text-lg font-semibold text-indigo-400">
+                          <h3 className="text-lg font-semibold text-cyan-400">
                             Content
                           </h3>
                           {points.length > 0 ? (

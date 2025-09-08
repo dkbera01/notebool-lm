@@ -201,7 +201,7 @@ export default function Home() {
     //TODO: Setup login modal
   };
   return (
-    <div className="min-h-screen flex flex-col text-white bg-gradient-to-br from-[#1a001a] to-[#06191c]">
+    <div className="min-h-screen flex flex-col text-white bg-gradient-to-br from-[#171717] to-[#139bb0]">
       <Toaster position="top-right" reverseOrder={false} />
       <Header />
 
@@ -258,7 +258,7 @@ export default function Home() {
               }
               className="absolute inset-0 opacity-0 cursor-pointer"
             />
-            <Upload className="w-10 h-10 text-indigo-400 mb-2" />
+            <Upload className="w-10 h-10 text-cyan-400 mb-2" />
             <p className="text-gray-300">Click or drag files to upload</p>
             {files.length > 0 && (
               <div className="text-sm text-gray-300 mt-3">
@@ -268,7 +268,7 @@ export default function Home() {
           </div>
           <button
             onClick={() => handleAddSource("file")}
-            className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-semibold text-lg flex items-center justify-center gap-2"
+            className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 rounded-xl font-semibold text-lg flex items-center justify-center gap-2"
             disabled={loadingFile}
           >
             {loadingFile && <Loader className="w-5 h-5 animate-spin" />}
@@ -287,11 +287,11 @@ export default function Home() {
             placeholder="Paste website links here..."
             value={websiteLinks}
             onChange={(e) => setWebsiteLinks(e.target.value)}
-            className="w-full p-3 rounded bg-black/60 border border-white/10 focus:outline-none focus:ring-2 focus:ring-indigo-500 h-48 mb-6"
+            className="w-full p-3 rounded bg-black/60 border border-white/10 focus:outline-none focus:ring-2 focus:ring-cyan-500 h-48 mb-6"
           />
           <button
             onClick={() => handleAddSource("website")}
-            className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-semibold text-lg flex items-center justify-center gap-2"
+            className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 rounded-xl font-semibold text-lg flex items-center justify-center gap-2"
             disabled={loadingWebsite}
           >
             {loadingWebsite && <Loader className="w-5 h-5 animate-spin" />}
@@ -315,11 +315,11 @@ export default function Home() {
             placeholder="Paste any raw text content here..."
             value={rawText}
             onChange={(e) => setRawText(e.target.value)}
-            className="w-full p-3 rounded bg-black/60 border border-white/10 focus:outline-none focus:ring-2 focus:ring-indigo-500 h-48 mb-6"
+            className="w-full p-3 rounded bg-black/60 border border-white/10 focus:outline-none focus:ring-2 focus:ring-cyan-500 h-48 mb-6"
           />
           <button
             onClick={() => handleAddSource("text")}
-            className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded-xl font-semibold text-lg flex items-center justify-center gap-2"
+            className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 rounded-xl font-semibold text-lg flex items-center justify-center gap-2"
             disabled={loadingText}
           >
             {loadingText && <Loader className="w-5 h-5 animate-spin" />}

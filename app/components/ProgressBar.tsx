@@ -9,7 +9,7 @@ export default function ProgressBar({ sourceCount }: { sourceCount: number }) {
       </div>
       <div className="w-full h-3 bg-black/50 rounded overflow-hidden">
         <div
-          className="h-full bg-indigo-500 transition-all"
+          className="h-full bg-cyan-500 transition-all"
           style={{ width: `${progressPercent}%` }}
         />
       </div>
