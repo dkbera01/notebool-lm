@@ -6,6 +6,12 @@ export default function SourceButtons({
   onText,
   sourceCount,
   sourceCountLimit,
+}: {
+  onFile: () => void;
+  onWebsite: () => void;
+  onText: () => void;
+  sourceCount: number;
+  sourceCountLimit: number;
 }) {
   return (
     <div className="flex flex-wrap gap-3">

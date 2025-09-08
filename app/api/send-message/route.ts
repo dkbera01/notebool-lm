@@ -26,7 +26,7 @@ export async function POST(request: Request) {
       openAIApiKey: process.env.OPENAI_API_KEY,
     });
 
-    let allResults = [];
+    const allResults = [];
     for (const collectionName of collections) {
       const vectorStore = await QdrantVectorStore.fromExistingCollection(
         embeddings,

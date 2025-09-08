@@ -116,13 +116,13 @@ export default function RagStore({
       const pointsData = await pointsRes.json();
       if (pointsData.result?.points) {
         setPoints(pointsData.result.points);
-        const uniqueSources = [
-          ...new Set(
+        const uniqueSources: string[] = Array.from(
+          new Set(
             pointsData.result.points
               .map((p: Point) => p.payload?.sourceId)
-              .filter((id: unknown): id is string => typeof id === 'string')
-          ),
-        ];
+              .filter((id: string): id is string => typeof id === 'string')
+          )
+        );
         setSources(uniqueSources);
       }
     } catch (err) {

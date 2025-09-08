@@ -29,7 +29,7 @@ export default function Home() {
   const [sourceCount, setSourceCount] = useState(0);
 
   const [chatInput, setChatInput] = useState("");
-  const [chatHistory, setChatHistory] = useState<any[]>([]);
+  const [chatHistory, setChatHistory] = useState<Array<{ sender: string; text: string }>>([]);
   const [selectedCollections, setSelectedCollections] = useState<string[]>([]);
 
   // loaders for different processes
